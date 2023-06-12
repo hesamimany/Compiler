@@ -6,6 +6,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 public class ProgramPrinter implements CListener {
 
+    StringBuilder sb = new StringBuilder();
+
     @Override
     public void enterPrimaryExpression(CParser.PrimaryExpressionContext ctx) {
 
@@ -18,6 +20,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterPostfixExpression(CParser.PostfixExpressionContext ctx) {
+//        System.out.println(ctx.getText());
 
     }
 
@@ -28,7 +31,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterArgumentExpressionList(CParser.ArgumentExpressionListContext ctx) {
-
+//        System.out.println(ctx.getText());
     }
 
     @Override
@@ -469,6 +472,7 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterParameterList(CParser.ParameterListContext ctx) {
 
+
     }
 
     @Override
@@ -588,7 +592,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterCompoundStatement(CParser.CompoundStatementContext ctx) {
-
+//        System.out.println(ctx.getText());
     }
 
     @Override
@@ -688,22 +692,41 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterProgram(CParser.ProgramContext ctx) {
-        System.out.println();
+        sb.append("program start {\n");
 
     }
 
     @Override
     public void exitProgram(CParser.ProgramContext ctx) {
-
+        sb.append("}\n");
+        System.out.println(sb);
     }
 
     @Override
     public void enterFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
+        sb.append("\t");
+        System.out.println();
+        if(ctx.declarator().directDeclarator().directDeclarator().getText().contains("main")){
+            sb.append("main method: return type: ");
+            if(ctx.typeSpecifier().getText().equals("void")){
+                sb.append("void(no return) {\n");
+            } else {
+                sb.append(ctx.typeSpecifier().getText());
+                sb.append(" {\n");
+            }
+        } else {
+            sb.append("normal method: name: ");
+            sb.append(ctx.declarator().directDeclarator().directDeclarator().getText());
+            sb.append("/ return type: ");
+            sb.append(ctx.typeSpecifier().getText());
+            sb.append(" {\n");
 
+        }
     }
 
     @Override
     public void exitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
+        sb.append("\t}\n");
 
     }
 
@@ -729,7 +752,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterEveryRule(ParserRuleContext parserRuleContext) {
-
+//        System.out.println(parserRuleContext.getText());
     }
 
     @Override
