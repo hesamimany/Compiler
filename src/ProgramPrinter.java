@@ -685,22 +685,57 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterSelectionStatement(CParser.SelectionStatementContext ctx) {
-
+        if(nested != 0){
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+            for (int i = 0; i < tab ; i++) {
+                sb.append("\t");
+            }
+            sb.append("nested statement: {\n");
+            for (int i = 0; i < tab-1 ; i++) {
+                sb.append("\t");
+            }
+        }
+        nested++;
     }
 
     @Override
     public void exitSelectionStatement(CParser.SelectionStatementContext ctx) {
+        nested--;
+        if(nested>0){
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+            for (int i = 0; i < tab-1 ; i++) {
+                sb.append("\t");
+            }
+            sb.append("}\n");
+        }
 
     }
 
     @Override
     public void enterIterationStatement(CParser.IterationStatementContext ctx) {
-
+        if(nested != 0){
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+            for (int i = 0; i < tab ; i++) {
+                sb.append("\t");
+            }
+            sb.append("nested statement: {\n");
+            for (int i = 0; i < tab-1 ; i++) {
+                sb.append("\t");
+            }
+        }
+        nested++;
     }
 
     @Override
     public void exitIterationStatement(CParser.IterationStatementContext ctx) {
-
+        nested--;
+        if(nested>0){
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+            for (int i = 0; i < tab-1 ; i++) {
+                sb.append("\t");
+            }
+            sb.append("}\n");
+        }
     }
 
     @Override
