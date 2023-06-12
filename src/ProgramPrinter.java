@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class ProgramPrinter implements CListener {
 
     StringBuilder sb = new StringBuilder();
+    int nested;
 
     @Override
     public void enterPrimaryExpression(CParser.PrimaryExpressionContext ctx) {
@@ -452,6 +453,8 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterNestedParenthesesBlock(CParser.NestedParenthesesBlockContext ctx) {
 
+        System.out.println(ctx.getText());
+
     }
 
     @Override
@@ -702,6 +705,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterForCondition(CParser.ForConditionContext ctx) {
+
 
     }
 
