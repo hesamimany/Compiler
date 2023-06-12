@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 public class ProgramPrinter implements CListener {
 
     StringBuilder sb = new StringBuilder();
-    int nested;
+    int nested = 0;
 
     @Override
     public void enterPrimaryExpression(CParser.PrimaryExpressionContext ctx) {
