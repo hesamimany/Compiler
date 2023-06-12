@@ -453,8 +453,6 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterNestedParenthesesBlock(CParser.NestedParenthesesBlockContext ctx) {
 
-        System.out.println(ctx.getText());
-
     }
 
     @Override
@@ -687,13 +685,9 @@ public class ProgramPrinter implements CListener {
     public void enterSelectionStatement(CParser.SelectionStatementContext ctx) {
         if(nested != 0){
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
-            for (int i = 0; i < tab ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
-            for (int i = 0; i < tab-1 ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab - 1)));
         }
         nested++;
     }
@@ -703,9 +697,7 @@ public class ProgramPrinter implements CListener {
         nested--;
         if(nested>0){
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
-            for (int i = 0; i < tab-1 ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
         }
 
@@ -715,13 +707,9 @@ public class ProgramPrinter implements CListener {
     public void enterIterationStatement(CParser.IterationStatementContext ctx) {
         if(nested != 0){
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
-            for (int i = 0; i < tab ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
-            for (int i = 0; i < tab-1 ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab - 1)));
         }
         nested++;
     }
@@ -731,9 +719,7 @@ public class ProgramPrinter implements CListener {
         nested--;
         if(nested>0){
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
-            for (int i = 0; i < tab-1 ; i++) {
-                sb.append("\t");
-            }
+            sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
         }
     }
@@ -794,7 +780,6 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
         sb.append("\t");
-        System.out.println();
         if(ctx.declarator().directDeclarator().directDeclarator().getText().contains("main")){
             sb.append("main method: return type: ");
             if(ctx.typeSpecifier().getText().equals("void")){
