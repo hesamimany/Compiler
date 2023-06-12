@@ -20,6 +20,26 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterPostfixExpression(CParser.PostfixExpressionContext ctx) {
+
+        if(ctx.LeftParen(0)!=null){ //func call
+            sb.append("\t\t");
+            sb.append("function call: name: ");
+            sb.append(ctx.primaryExpression().getText());
+            sb.append("/ params: ");
+            int count = 0;
+
+                for (var param : ctx.argumentExpressionList(0).assignmentExpression()) {
+
+                    sb.append(param.getText());
+                    sb.append(" (index: ");
+                    sb.append(count);
+                    sb.append(")");
+                    sb.append(", ");
+                    count++;
+                }
+            sb.delete(sb.length()-2,sb.length());
+            sb.append("\n");
+        }
 //        System.out.println(ctx.getText());
 
     }
@@ -471,13 +491,22 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterParameterList(CParser.ParameterListContext ctx) {
-
+        if(!ctx.getText().isEmpty()){
+            sb.append("\t\tparameter list: [");
+            for (CParser.ParameterDeclarationContext param: ctx.parameterDeclaration()) {
+                sb.append(param.declarator().directDeclarator().Identifier().getText());
+                sb.append(" ");
+                sb.append(param.declarationSpecifiers().getText());
+                sb.append(", ");
+            }
+        }
 
     }
 
     @Override
     public void exitParameterList(CParser.ParameterListContext ctx) {
-
+        sb.delete(sb.length()-2,sb.length());
+        sb.append("]\n");
     }
 
     @Override
@@ -602,6 +631,27 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterBlockItemList(CParser.BlockItemListContext ctx) {
+
+        for (CParser.BlockItemContext block: ctx.blockItem()) {
+            if(block.declaration()!=null){
+                sb.append("\t\tfield: ");
+                if(block.declaration().initDeclaratorList()!=null) {
+                    sb.append(block.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Identifier().getText());
+                    sb.append("/ type: ");
+                    sb.append(block.declaration().declarationSpecifiers().getText());
+                    if (block.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) {
+                        sb.append("/ length: ");
+                        sb.append(block.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0));
+                    }
+                    sb.append("\n");
+                } else {
+                    sb.append(block.declaration().declarationSpecifiers().declarationSpecifier(1).getText());
+                    sb.append("/ type: ");
+                    sb.append(block.declaration().declarationSpecifiers().declarationSpecifier(0).getText());
+                    sb.append("\n");
+                }
+            }
+        }
 
     }
 
