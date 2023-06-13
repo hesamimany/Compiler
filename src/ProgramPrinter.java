@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.time.temporal.ValueRange;
 import java.util.Hashtable;
 
 public class ProgramPrinter implements CListener {
@@ -831,6 +832,30 @@ public class ProgramPrinter implements CListener {
 
 
         //                  *******************                  // functions SymbolTable
+        key = new StringBuilder();
+        value = new StringBuilder();
+        String name = ctx.declarator().directDeclarator().directDeclarator().getText();
+        symbolTable.addChild(new SymbolTable(ctx.start.getLine(),name));
+        for (CParser.BlockItemContext item: ctx.compoundStatement().blockItemList().blockItem()) {
+            if(item.declaration() != null) {
+                if (item.declaration().initDeclaratorList() != null) {
+                    key.append(String.format("Field_%s", item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText()));
+                    value.append(String.format("methodField(name:%s) (type:%s",
+                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText(),
+                            item.declaration().declarationSpecifiers().getText()));
+                    if(item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null){
+                        value.append(" ");
+                        value.append(String.format("array, length= %s",item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
+                    }
+                    value.append(")");
+
+                }
+                else{
+                    key.append(String.format("Field_%s",item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                    //value.append(String.format("methodField(name:%s) (type:%s",item.));
+                }
+            }
+        }
 
 
 
