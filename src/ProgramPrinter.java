@@ -4,10 +4,13 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.Hashtable;
+
 public class ProgramPrinter implements CListener {
 
     StringBuilder sb = new StringBuilder();
     int nested = 0;
+    SymbolTable symbolTable;
 
     @Override
     public void enterPrimaryExpression(CParser.PrimaryExpressionContext ctx) {
@@ -22,23 +25,23 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterPostfixExpression(CParser.PostfixExpressionContext ctx) {
 
-        if(ctx.LeftParen(0)!=null){ //func call
+        if (ctx.LeftParen(0) != null) { //func call
             sb.append("\t\t");
             sb.append("function call: name: ");
             sb.append(ctx.primaryExpression().getText());
             sb.append("/ params: ");
             int count = 0;
 
-                for (var param : ctx.argumentExpressionList(0).assignmentExpression()) {
+            for (var param : ctx.argumentExpressionList(0).assignmentExpression()) {
 
-                    sb.append(param.getText());
-                    sb.append(" (index: ");
-                    sb.append(count);
-                    sb.append(")");
-                    sb.append(", ");
-                    count++;
-                }
-            sb.delete(sb.length()-2,sb.length());
+                sb.append(param.getText());
+                sb.append(" (index: ");
+                sb.append(count);
+                sb.append(")");
+                sb.append(", ");
+                count++;
+            }
+            sb.delete(sb.length() - 2, sb.length());
             sb.append("\n");
         }
 //        System.out.println(ctx.getText());
@@ -492,9 +495,9 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterParameterList(CParser.ParameterListContext ctx) {
-        if(!ctx.getText().isEmpty()){
+        if (!ctx.getText().isEmpty()) {
             sb.append("\t\tparameter list: [");
-            for (CParser.ParameterDeclarationContext param: ctx.parameterDeclaration()) {
+            for (CParser.ParameterDeclarationContext param : ctx.parameterDeclaration()) {
                 sb.append(param.declarator().directDeclarator().Identifier().getText());
                 sb.append(" ");
                 sb.append(param.declarationSpecifiers().getText());
@@ -506,7 +509,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void exitParameterList(CParser.ParameterListContext ctx) {
-        sb.delete(sb.length()-2,sb.length());
+        sb.delete(sb.length() - 2, sb.length());
         sb.append("]\n");
     }
 
@@ -633,10 +636,10 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterBlockItemList(CParser.BlockItemListContext ctx) {
 
-        for (CParser.BlockItemContext block: ctx.blockItem()) {
-            if(block.declaration()!=null){
+        for (CParser.BlockItemContext block : ctx.blockItem()) {
+            if (block.declaration() != null) {
                 sb.append("\t\tfield: ");
-                if(block.declaration().initDeclaratorList()!=null) {
+                if (block.declaration().initDeclaratorList() != null) {
                     sb.append(block.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Identifier().getText());
                     sb.append("/ type: ");
                     sb.append(block.declaration().declarationSpecifiers().getText());
@@ -683,8 +686,8 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterSelectionStatement(CParser.SelectionStatementContext ctx) {
-        if(nested != 0){
-            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+        if (nested != 0) {
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
             sb.append("\t".repeat(Math.max(0, tab - 1)));
@@ -695,8 +698,8 @@ public class ProgramPrinter implements CListener {
     @Override
     public void exitSelectionStatement(CParser.SelectionStatementContext ctx) {
         nested--;
-        if(nested>0){
-            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+        if (nested > 0) {
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
         }
@@ -705,8 +708,8 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterIterationStatement(CParser.IterationStatementContext ctx) {
-        if(nested != 0){
-            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+        if (nested != 0) {
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
             sb.append("\t".repeat(Math.max(0, tab - 1)));
@@ -717,8 +720,8 @@ public class ProgramPrinter implements CListener {
     @Override
     public void exitIterationStatement(CParser.IterationStatementContext ctx) {
         nested--;
-        if(nested>0){
-            int tab = sb.toString().split("\n")[sb.toString().split("\n").length-1].split("\t").length-1;
+        if (nested > 0) {
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
         }
@@ -768,21 +771,22 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterProgram(CParser.ProgramContext ctx) {
         sb.append("program start {\n");
-
+        symbolTable = new SymbolTable(1, "program"); // program
     }
 
     @Override
     public void exitProgram(CParser.ProgramContext ctx) {
         sb.append("}\n");
         System.out.println(sb);
+        System.out.println(symbolTable);
     }
 
     @Override
     public void enterFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
         sb.append("\t");
-        if(ctx.declarator().directDeclarator().directDeclarator().getText().contains("main")){
+        if (ctx.declarator().directDeclarator().directDeclarator().getText().contains("main")) {
             sb.append("main method: return type: ");
-            if(ctx.typeSpecifier().getText().equals("void")){
+            if (ctx.typeSpecifier().getText().equals("void")) {
                 sb.append("void(no return) {\n");
             } else {
                 sb.append(ctx.typeSpecifier().getText());
@@ -796,6 +800,36 @@ public class ProgramPrinter implements CListener {
             sb.append(" {\n");
 
         }
+
+        //                  *******************                  // program SymbolTable
+
+        StringBuilder key = new StringBuilder(), value = new StringBuilder();
+        key.append(String.format("Method_%s",
+                ctx.declarator().directDeclarator().directDeclarator().getText()));
+        value.append(String.format("Value: Method (name: %s) (return type: %s)",
+                ctx.declarator().directDeclarator().directDeclarator().getText(),
+                ctx.typeSpecifier().getText()));
+        if (ctx.declarator().directDeclarator().parameterTypeList() != null) {
+            value.append("  [parameter list: ");
+            int counter = 0;
+            for (CParser.ParameterDeclarationContext params : ctx.declarator().directDeclarator().parameterTypeList().parameterList().parameterDeclaration()) {
+
+                value.append("[type: ");
+                value.append(params.declarationSpecifiers().getText());
+                if (params.declarator().directDeclarator().LeftBracket(0) != null) {
+                    value.append(" array");
+                }
+                value.append(", index: ");
+                value.append(counter);
+                value.append("]");
+                counter++;
+            }
+            value.append("]");
+        }
+
+        symbolTable.insert(key.toString(), value.toString());
+
+
     }
 
     @Override
