@@ -1,5 +1,6 @@
 void myFunction(int myNumbers[5], char isOdd) {
     char character[10] = "hello";
+    int num = 12;
     for (int i = 0; i < 5; i++) {
         if(isOdd == 'y'){
             printf("%d\n", myNumbers[i]);
