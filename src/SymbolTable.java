@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.*;
 
 public class SymbolTable {
     private final Hashtable<String, String> hashtable;
@@ -41,18 +40,51 @@ public class SymbolTable {
         return name;
     }
 
+    public int getLine() {
+        return line;
+    }
+
     public SymbolTable getParent() {
         return parent;
     }
 
+    public SymbolTable getChild(String name) {
+        SymbolTable current = this;
+        if (children.isEmpty()) {
+            if (current.getName().equals(name)) return current;
+            else return null;
+        } else {
+            for (SymbolTable table : children) {
+                current = table.getChild(name);
+                if (current != null) return current;
+            }
+        }
+        return null;
+    }
+
+    public Set<SymbolTable> getAllChildren() {
+        Set<SymbolTable> all = new LinkedHashSet<>();
+        all.add(this);
+        if (!children.isEmpty()) {
+            for (SymbolTable table : children) {
+                all.addAll(table.getAllChildren());
+            }
+        }
+        return all;
+    }
+
     @Override
     public String toString() {
+        Set<SymbolTable> all = getAllChildren();
         StringBuilder string = new StringBuilder();
-        string.append(String.format("---------%s: %d---------\n", name, line));
-        for (String key : hashtable.keySet()) {
-            string.append(String.format("Key: %s | %s\n", key, hashtable.get(key)));
+        for (SymbolTable table : all) {
+            string.append(String.format("---------%s: %d---------\n", table.getName(), table.getLine()));
+            for (String key : table.hashtable.keySet()) {
+                string.append(String.format("Key: %s | %s\n", key, table.hashtable.get(key)));
+            }
+            string.append("\n===========================================================================\n\n");
         }
-        string.append("\n===========================================================================\n\n");
+
         return string.toString();
     }
 }
