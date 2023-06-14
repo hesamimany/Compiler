@@ -517,6 +517,7 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterParameterDeclaration(CParser.ParameterDeclarationContext ctx) {
 
+
     }
 
     @Override
@@ -859,11 +860,31 @@ public class ProgramPrinter implements CListener {
                             item.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
                             item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
                 }
-                symbolTable.getChild(name).insert(key.toString(),value.toString());
+                symbolTable.getChild(name).insert(key.toString(), value.toString());
             }
         }
 
+        //                  *******************                  // function params SymbolTable
 
+        for (CParser.ParameterDeclarationContext params :
+                ctx.declarator().directDeclarator().parameterTypeList().parameterList().parameterDeclaration()) {
+            key = new StringBuilder();
+            value = new StringBuilder();
+
+            key.append(String.format("Field_%s",params.declarator().directDeclarator().Identifier().getText()));
+            if(params.declarator().directDeclarator().LeftBracket(0) != null){ // array
+                value.append(String.format("methodParamField(name: %s) (type: %s array, length= %s)",
+                        params.declarator().directDeclarator().Identifier().getText(),
+                        params.declarationSpecifiers().getText(),
+                        params.declarator().directDeclarator().Constant(0).getText()));
+            } else { // not array
+                value.append(String.format("methodParamField(name: %s) (type: %s)",
+                        params.declarator().directDeclarator().Identifier().getText(),
+                        params.declarationSpecifiers().getText()));
+            }
+
+            symbolTable.getChild(name).insert(key.toString(), value.toString());
+        }
     }
 
     @Override
