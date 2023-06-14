@@ -831,32 +831,37 @@ public class ProgramPrinter implements CListener {
         symbolTable.insert(key.toString(), value.toString());
 
 
-        //                  *******************                  // functions SymbolTable
-        key = new StringBuilder();
-        value = new StringBuilder();
+        //                  *******************                  // function fields SymbolTable
+
         String name = ctx.declarator().directDeclarator().directDeclarator().getText();
-        symbolTable.addChild(new SymbolTable(ctx.start.getLine(),name));
-        for (CParser.BlockItemContext item: ctx.compoundStatement().blockItemList().blockItem()) {
-            if(item.declaration() != null) {
-                if (item.declaration().initDeclaratorList() != null) {
-                    key.append(String.format("Field_%s", item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText()));
+        symbolTable.addChild(new SymbolTable(ctx.start.getLine(), name));
+        for (CParser.BlockItemContext item : ctx.compoundStatement().blockItemList().blockItem()) {
+            key = new StringBuilder();
+            value = new StringBuilder();
+            if (item.declaration() != null) {
+                if (item.declaration().initDeclaratorList() != null) { // init value or array
+                    key.append(String.format("Field_%s",
+                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
                     value.append(String.format("methodField(name:%s) (type:%s",
-                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText(),
+                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
                             item.declaration().declarationSpecifiers().getText()));
-                    if(item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null){
+                    if (item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
                         value.append(" ");
-                        value.append(String.format("array, length= %s",item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
+                        value.append(String.format("array, length= %s",
+                                item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
                     }
                     value.append(")");
 
+                } else { // no init value
+                    key.append(String.format("Field_%s",
+                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                    value.append(String.format("methodField(name:%s) (type:%s)",
+                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
+                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
                 }
-                else{
-                    key.append(String.format("Field_%s",item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
-                    //value.append(String.format("methodField(name:%s) (type:%s",item.));
-                }
+                symbolTable.getChild(name).insert(key.toString(),value.toString());
             }
         }
-
 
 
     }
