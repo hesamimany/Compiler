@@ -13,6 +13,21 @@ void myFunction(int myNumbers[5], char isOdd) {
         }
     }
 }
+
+int func(int a, int b[10]){
+    char ch = 'b';
+    int n = 20;
+    printf("%s",ch);
+    if(1){
+        if(1){
+            while(1){
+                int aaa = 100;
+            }
+        }
+    }
+    return 10;
+}
+
 int main(int args[100]) {
     int myNumbers[5] = {10, 20, 30, 40, 50};
     int counter = 5;
