@@ -4,14 +4,12 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.time.temporal.ValueRange;
-import java.util.Hashtable;
-
 public class ProgramPrinter implements CListener {
 
     StringBuilder sb = new StringBuilder();
     int nested = 0;
     SymbolTable symbolTable;
+    SymbolTable current;
 
     @Override
     public void enterPrimaryExpression(CParser.PrimaryExpressionContext ctx) {
@@ -26,8 +24,14 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterPostfixExpression(CParser.PostfixExpressionContext ctx) {
 
-        if (ctx.LeftParen(0) != null) { //func call
-            sb.append("\t\t");
+        if (ctx.LeftParen(0) != null) { //func call (Phase 1)
+//            System.out.println("\n\n" + sb.toString().split("\n")[sb.toString().split("\n").length - 1] + "\n\n");
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+                tab++;
+            }
+            sb.append("\t".repeat(Math.max(0, tab)));
+
             sb.append("function call: name: ");
             sb.append(ctx.primaryExpression().getText());
             sb.append("/ params: ");
@@ -45,7 +49,6 @@ public class ProgramPrinter implements CListener {
             sb.delete(sb.length() - 2, sb.length());
             sb.append("\n");
         }
-//        System.out.println(ctx.getText());
 
     }
 
@@ -56,7 +59,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterArgumentExpressionList(CParser.ArgumentExpressionListContext ctx) {
-//        System.out.println(ctx.getText());
+
     }
 
     @Override
@@ -496,8 +499,10 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterParameterList(CParser.ParameterListContext ctx) {
-        if (!ctx.getText().isEmpty()) {
-            sb.append("\t\tparameter list: [");
+        if (!ctx.getText().isEmpty()) { // (Phase 1)
+            int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+            sb.append("\t".repeat(Math.max(0, tab+1)));
+            sb.append("parameter list: [");
             for (CParser.ParameterDeclarationContext param : ctx.parameterDeclaration()) {
                 sb.append(param.declarator().directDeclarator().Identifier().getText());
                 sb.append(" ");
@@ -510,7 +515,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void exitParameterList(CParser.ParameterListContext ctx) {
-        sb.delete(sb.length() - 2, sb.length());
+        sb.delete(sb.length() - 2, sb.length()); // (Phase 1)
         sb.append("]\n");
     }
 
@@ -627,7 +632,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterCompoundStatement(CParser.CompoundStatementContext ctx) {
-//        System.out.println(ctx.getText());
+
     }
 
     @Override
@@ -639,8 +644,15 @@ public class ProgramPrinter implements CListener {
     public void enterBlockItemList(CParser.BlockItemListContext ctx) {
 
         for (CParser.BlockItemContext block : ctx.blockItem()) {
-            if (block.declaration() != null) {
-                sb.append("\t\tfield: ");
+            if (block.declaration() != null) { // (Phase 1)
+                int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+                if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+                    tab++;
+                }
+                sb.append("\t".repeat(Math.max(0, tab)));
+
+
+                sb.append("field: ");
                 if (block.declaration().initDeclaratorList() != null) {
                     sb.append(block.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Identifier().getText());
                     sb.append("/ type: ");
@@ -688,18 +700,23 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterSelectionStatement(CParser.SelectionStatementContext ctx) {
-        if (nested != 0) {
+        if (nested != 0) { // (Phase 1)
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+
+            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+                tab++;
+            }
+
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
-            sb.append("\t".repeat(Math.max(0, tab - 1)));
+//            sb.append("\t".repeat(Math.max(0, tab + 1)));
         }
         nested++;
     }
 
     @Override
     public void exitSelectionStatement(CParser.SelectionStatementContext ctx) {
-        nested--;
+        nested--; // (Phase 1)
         if (nested > 0) {
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
@@ -710,18 +727,23 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterIterationStatement(CParser.IterationStatementContext ctx) {
-        if (nested != 0) {
+        if (nested != 0) { // (Phase 1)
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+
+            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+                tab++;
+            }
+
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
-            sb.append("\t".repeat(Math.max(0, tab - 1)));
+//            sb.append("\t".repeat(Math.max(0, tab)));
         }
         nested++;
     }
 
     @Override
     public void exitIterationStatement(CParser.IterationStatementContext ctx) {
-        nested--;
+        nested--; // (Phase 1)
         if (nested > 0) {
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
@@ -772,20 +794,28 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterProgram(CParser.ProgramContext ctx) {
-        sb.append("program start {\n");
+        sb.append("program start {\n"); // (Phase 1)
         symbolTable = new SymbolTable(1, "program"); // program
     }
 
     @Override
     public void exitProgram(CParser.ProgramContext ctx) {
-        sb.append("}\n");
+        sb.append("}\n"); // (Phase 1)
         System.out.println(sb);
         System.out.println(symbolTable);
     }
 
     @Override
     public void enterFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
-        sb.append("\t");
+        // sb.append("\t"); // (Phase 1)
+        int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
+
+        if(!sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("program start")){
+            tab--;
+        }
+
+        sb.append("\t".repeat(Math.max(0, tab + 1)));
+
         if (ctx.declarator().directDeclarator().directDeclarator().getText().contains("main")) {
             sb.append("main method: return type: ");
             if (ctx.typeSpecifier().getText().equals("void")) {
@@ -803,7 +833,7 @@ public class ProgramPrinter implements CListener {
 
         }
 
-        //                  *******************                  // program SymbolTable
+        //                  *******************                  // program SymbolTable (Phase 2)
 
         StringBuilder key = new StringBuilder(), value = new StringBuilder();
         key.append(String.format("Method_%s",
@@ -830,9 +860,10 @@ public class ProgramPrinter implements CListener {
         }
 
         symbolTable.insert(key.toString(), value.toString());
+        current = symbolTable;
 
 
-        //                  *******************                  // function fields SymbolTable
+        //                  *******************                  // function fields SymbolTable (Phase 2)
 
         String name = ctx.declarator().directDeclarator().directDeclarator().getText();
         symbolTable.addChild(new SymbolTable(ctx.start.getLine(), name));
@@ -843,7 +874,7 @@ public class ProgramPrinter implements CListener {
                 if (item.declaration().initDeclaratorList() != null) { // init value or array
                     key.append(String.format("Field_%s",
                             item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
-                    value.append(String.format("methodField(name:%s) (type:%s",
+                    value.append(String.format("methodField(name: %s) (type: %s",
                             item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
                             item.declaration().declarationSpecifiers().getText()));
                     if (item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
@@ -861,18 +892,19 @@ public class ProgramPrinter implements CListener {
                             item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
                 }
                 symbolTable.getChild(name).insert(key.toString(), value.toString());
+                current = symbolTable.getChild(name);
             }
         }
 
-        //                  *******************                  // function params SymbolTable
+        //                  *******************                  // function params SymbolTable (Phase 2)
 
         for (CParser.ParameterDeclarationContext params :
                 ctx.declarator().directDeclarator().parameterTypeList().parameterList().parameterDeclaration()) {
             key = new StringBuilder();
             value = new StringBuilder();
 
-            key.append(String.format("Field_%s",params.declarator().directDeclarator().Identifier().getText()));
-            if(params.declarator().directDeclarator().LeftBracket(0) != null){ // array
+            key.append(String.format("Field_%s", params.declarator().directDeclarator().Identifier().getText()));
+            if (params.declarator().directDeclarator().LeftBracket(0) != null) { // array
                 value.append(String.format("methodParamField(name: %s) (type: %s array, length= %s)",
                         params.declarator().directDeclarator().Identifier().getText(),
                         params.declarationSpecifiers().getText(),
@@ -884,12 +916,13 @@ public class ProgramPrinter implements CListener {
             }
 
             symbolTable.getChild(name).insert(key.toString(), value.toString());
+            current = symbolTable.getChild(name);
         }
     }
 
     @Override
     public void exitFunctionDefinition(CParser.FunctionDefinitionContext ctx) {
-        sb.append("\t}\n");
+        sb.append("\t}\n"); // (Phase 2)
 
     }
 
@@ -915,7 +948,7 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterEveryRule(ParserRuleContext parserRuleContext) {
-//        System.out.println(parserRuleContext.getText());
+
     }
 
     @Override
