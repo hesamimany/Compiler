@@ -533,6 +533,7 @@ public class ProgramPrinter implements CListener {
     @Override
     public void enterIdentifierList(CParser.IdentifierListContext ctx) {
 
+
     }
 
     @Override
@@ -552,7 +553,12 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterTypedefName(CParser.TypedefNameContext ctx) {
-
+        if(current.lookup(ctx.getText(),true)==null){
+            System.out.printf("Error106: in line [%d:%d], Can not find Variable [%s]%n",
+                    ctx.start.getLine(),
+                    ctx.start.getCharPositionInLine(),
+                    ctx.getText());
+        }
     }
 
     @Override
@@ -717,15 +723,25 @@ public class ProgramPrinter implements CListener {
             SymbolTable nest = new SymbolTable(ctx.start.getLine(), "nested");
             nest.setParent(current);
             current.addChild(nest);
+            current = nest;
             StringBuilder key = new StringBuilder(), value = new StringBuilder();
 
             for (var variable : ctx.statement(0).compoundStatement().blockItemList().blockItem()) {
                 if (variable.declaration() != null) {
                     if (variable.declaration().initDeclaratorList() != null) { // init value or array
-                        key.append(String.format("Field_%s",
-                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
-                        value.append(String.format("methodField(name: %s) (type: %s",
-                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
+                        String fieldName = variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0];
+                        if(nest.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                            fieldName+="_"+variable.start.getLine()+"_"+variable.start.getCharPositionInLine();
+                            SymbolTable temp = current;
+                            while(temp.getName().contains("nested")){
+                                temp = temp.getParent();
+                            }
+                            System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",variable.start.getLine(),
+                                    variable.start.getCharPositionInLine(),
+                                    fieldName.split("_")[0]);
+                        }
+                        key.append(String.format("Field_%s", fieldName));
+                        value.append(String.format("methodField(name: %s) (type: %s", fieldName,
                                 variable.declaration().declarationSpecifiers().getText()));
                         if (variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
                             value.append(" ");
@@ -735,11 +751,21 @@ public class ProgramPrinter implements CListener {
                         value.append(")");
 
                     } else { // no init value
-                        key.append(String.format("Field_%s",
-                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
-                        value.append(String.format("methodField(name:%s) (type:%s)",
-                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
-                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                        String fieldName = variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText();
+                        if(nest.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                            fieldName+="_"+variable.start.getLine()+"_"+variable.start.getCharPositionInLine();
+                            SymbolTable temp = current;
+                            while(temp.getName().contains("nested")){
+                                temp = temp.getParent();
+                            }
+                            System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",variable.start.getLine(),
+                                    variable.start.getCharPositionInLine(),
+                                    fieldName.split("_")[0]);
+                        }
+
+                        key.append(String.format("Field_%s", fieldName));
+                        value.append(String.format("methodField(name:%s) (type:%s)", fieldName,
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(0).getText()));
                     }
                     nest.insert(key.toString(), value.toString());
                 }
@@ -757,7 +783,7 @@ public class ProgramPrinter implements CListener {
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
 
-            if (current != null)
+            if (current.getParent() != null)
                 current = current.getParent();
         }
 
@@ -779,15 +805,29 @@ public class ProgramPrinter implements CListener {
             SymbolTable nest = new SymbolTable(ctx.start.getLine(), "nested");
             nest.setParent(current);
             current.addChild(nest);
+            current = nest;
             StringBuilder key = new StringBuilder(), value = new StringBuilder();
 
             for (var variable : ctx.statement().compoundStatement().blockItemList().blockItem()) {
                 if (variable.declaration() != null) {
                     if (variable.declaration().initDeclaratorList() != null) { // init value or array
+
+                        String fieldName = variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0];
+                        if(nest.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                            fieldName+="_"+variable.start.getLine()+"_"+variable.start.getCharPositionInLine();
+                            SymbolTable temp = current;
+                            while(temp.getName().contains("nested")){
+                                temp = temp.getParent();
+                            }
+                            System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",variable.start.getLine(),
+                                    variable.start.getCharPositionInLine(),
+                                    fieldName.split("_")[0]);
+                        }
+
                         key.append(String.format("Field_%s",
-                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
+                                fieldName));
                         value.append(String.format("methodField(name: %s) (type: %s",
-                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
+                                fieldName,
                                 variable.declaration().declarationSpecifiers().getText()));
                         if (variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
                             value.append(" ");
@@ -797,10 +837,23 @@ public class ProgramPrinter implements CListener {
                         value.append(")");
 
                     } else { // no init value
+
+                        String fieldName = variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText();
+                        if(nest.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                            fieldName+="_"+variable.start.getLine()+"_"+variable.start.getCharPositionInLine();
+                            SymbolTable temp = current;
+                            while(temp.getName().contains("nested")){
+                                temp = temp.getParent();
+                            }
+                            System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",variable.start.getLine(),
+                                    variable.start.getCharPositionInLine(),
+                                    fieldName.split("_")[0]);
+                        }
+
                         key.append(String.format("Field_%s",
-                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                                fieldName));
                         value.append(String.format("methodField(name:%s) (type:%s)",
-                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
+                                fieldName,
                                 variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
                     }
                     nest.insert(key.toString(), value.toString());
@@ -817,7 +870,7 @@ public class ProgramPrinter implements CListener {
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
-            if (current != null)
+            if (current.getParent() != null)
                 current = current.getParent();
         }
     }
@@ -855,7 +908,30 @@ public class ProgramPrinter implements CListener {
 
     @Override
     public void enterJumpStatement(CParser.JumpStatementContext ctx) {
-
+        if(ctx.Return()!=null){
+            SymbolTable temp = current;
+            while (current!=null && current.getName().contains("nested")){
+                temp = temp.getParent();
+            }
+            String returnType = symbolTable.getHashtable().get("Method_"+temp.getName()).split("return type: ")[1].split("\\)")[0];
+            CParser.PrimaryExpressionContext value = ctx.expression().assignmentExpression(0).conditionalExpression().logicalOrExpression().logicalAndExpression(0).inclusiveOrExpression(0).exclusiveOrExpression(0).andExpression(0).equalityExpression(0).relationalExpression(0).shiftExpression(0).additiveExpression(0).multiplicativeExpression(0).castExpression(0).unaryExpression().postfixExpression().primaryExpression();
+            if(value.Constant()==null){
+                if(temp.lookup(value.getText(),true) != null){
+                    if(!temp.getHashtable().get("Field_"+value.getText()).split("type: ")[1].split(" ")[0].equals(returnType)){
+                        System.out.printf("Error210: in line [%d:%d], ReturnType of this method must be [%s]%n",ctx.start.getLine(),
+                                ctx.start.getCharPositionInLine(),
+                                returnType);
+                    }
+                }
+            } else if (value.Identifier() == null) {
+                Enum<Type> typeEnum = SymbolTable.typeCheck(value.getText());
+                if(!returnType.toUpperCase().equals(typeEnum.toString())){
+                    System.out.printf("Error210: in line [%d:%d], ReturnType of this method must be [%s]%n",ctx.start.getLine(),
+                            ctx.start.getCharPositionInLine(),
+                            returnType);
+                }
+            }
+        }
     }
 
     @Override
@@ -907,10 +983,19 @@ public class ProgramPrinter implements CListener {
         //                  *******************                  // program SymbolTable (Phase 2)
 
         StringBuilder key = new StringBuilder(), value = new StringBuilder();
-        key.append(String.format("Method_%s",
-                ctx.declarator().directDeclarator().directDeclarator().getText()));
+
+            //           ********************            // phase(3) method already defined
+        String funcName = ctx.declarator().directDeclarator().directDeclarator().getText();
+        if(symbolTable.lookup(funcName, false)!=null){
+            funcName+="_"+ctx.start.getLine()+"_"+ctx.start.getCharPositionInLine();
+            System.out.printf("Error102: in line [%d:%d], method [%s] has been defined already%n",ctx.start.getLine(),
+                    ctx.start.getCharPositionInLine(),
+                    funcName.split("_")[0]);
+        }
+
+        key.append(String.format("Method_%s", funcName));
         value.append(String.format("Value: Method (name: %s) (return type: %s)",
-                ctx.declarator().directDeclarator().directDeclarator().getText(),
+                funcName,
                 ctx.typeSpecifier().getText()));
         if (ctx.declarator().directDeclarator().parameterTypeList() != null) {
             value.append("  [parameter list: ");
@@ -933,42 +1018,12 @@ public class ProgramPrinter implements CListener {
         symbolTable.insert(key.toString(), value.toString());
         current = symbolTable;
 
-
-        //                  *******************                  // function fields SymbolTable (Phase 2)
-
-        String name = ctx.declarator().directDeclarator().directDeclarator().getText();
-        symbolTable.addChild(new SymbolTable(ctx.start.getLine(), name));
-        for (CParser.BlockItemContext item : ctx.compoundStatement().blockItemList().blockItem()) {
-            key = new StringBuilder();
-            value = new StringBuilder();
-            if (item.declaration() != null) {
-                if (item.declaration().initDeclaratorList() != null) { // init value or array
-                    key.append(String.format("Field_%s",
-                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
-                    value.append(String.format("methodField(name: %s) (type: %s",
-                            item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
-                            item.declaration().declarationSpecifiers().getText()));
-                    if (item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
-                        value.append(" ");
-                        value.append(String.format("array, length= %s",
-                                item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
-                    }
-                    value.append(")");
-
-                } else { // no init value
-                    key.append(String.format("Field_%s",
-                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
-                    value.append(String.format("methodField(name:%s) (type:%s)",
-                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
-                            item.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
-                }
-                symbolTable.getChild(name).insert(key.toString(), value.toString());
-                current = symbolTable.getChild(name);
-            }
-        }
-
         //                  *******************                  // function params SymbolTable (Phase 2)
 
+        String name = ctx.declarator().directDeclarator().directDeclarator().getText();
+        SymbolTable temp = new SymbolTable(ctx.start.getLine(), name);
+        symbolTable.addChild(temp);
+        current = temp;
         for (CParser.ParameterDeclarationContext params :
                 ctx.declarator().directDeclarator().parameterTypeList().parameterList().parameterDeclaration()) {
             key = new StringBuilder();
@@ -989,6 +1044,58 @@ public class ProgramPrinter implements CListener {
             symbolTable.getChild(name).insert(key.toString(), value.toString());
             current = symbolTable.getChild(name);
         }
+
+
+        //                  *******************                  // function fields SymbolTable (Phase 2)
+
+
+
+        for (CParser.BlockItemContext item : ctx.compoundStatement().blockItemList().blockItem()) {
+            key = new StringBuilder();
+            value = new StringBuilder();
+
+            if (item.declaration() != null) {
+                if (item.declaration().initDeclaratorList() != null) { // init value or array
+                    String fieldName = item.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0];
+                    if(current.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                        fieldName+="_"+item.start.getLine()+"_"+item.start.getCharPositionInLine();
+                        System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",item.start.getLine(),
+                                item.start.getCharPositionInLine(),
+                                fieldName.split("_")[0]);
+                    }
+
+                    key.append(String.format("Field_%s", fieldName));
+                    value.append(String.format("methodField(name: %s) (type: %s", fieldName,
+                            item.declaration().declarationSpecifiers().getText()));
+                    if (item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
+                        value.append(" ");
+                        value.append(String.format("array, length= %s",
+                                item.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
+                    }
+                    value.append(")");
+
+                } else { // no init value
+                    String fieldName = item.declaration().declarationSpecifiers().declarationSpecifier(1).getText();
+                    if(current.lookup(fieldName, true)!=null){ // phase(3) field already defined
+                        fieldName+="_"+item.start.getLine()+"_"+item.start.getCharPositionInLine();
+                        System.out.printf("Error104: in line [%d:%d], field [%s] has been defined already%n",item.start.getLine(),
+                                item.start.getCharPositionInLine(),
+                                fieldName.split("_")[0]);
+                    }
+
+                    key.append(String.format("Field_%s", fieldName));
+                    value.append(String.format("methodField(name:%s) (type:%s)", fieldName,
+                            item.declaration().declarationSpecifiers().declarationSpecifier(0).getText()));
+                }
+                symbolTable.getChild(name).insert(key.toString(), value.toString());
+                current = symbolTable.getChild(name);
+            }
+        }
+
+
+
+
+
     }
 
     @Override
