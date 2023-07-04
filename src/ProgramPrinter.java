@@ -27,7 +27,7 @@ public class ProgramPrinter implements CListener {
         if (ctx.LeftParen(0) != null) { //func call (Phase 1)
 //            System.out.println("\n\n" + sb.toString().split("\n")[sb.toString().split("\n").length - 1] + "\n\n");
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
-            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+            if (sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")) {
                 tab++;
             }
             sb.append("\t".repeat(Math.max(0, tab)));
@@ -501,7 +501,7 @@ public class ProgramPrinter implements CListener {
     public void enterParameterList(CParser.ParameterListContext ctx) {
         if (!ctx.getText().isEmpty()) { // (Phase 1)
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
-            sb.append("\t".repeat(Math.max(0, tab+1)));
+            sb.append("\t".repeat(Math.max(0, tab + 1)));
             sb.append("parameter list: [");
             for (CParser.ParameterDeclarationContext param : ctx.parameterDeclaration()) {
                 sb.append(param.declarator().directDeclarator().Identifier().getText());
@@ -646,7 +646,7 @@ public class ProgramPrinter implements CListener {
         for (CParser.BlockItemContext block : ctx.blockItem()) {
             if (block.declaration() != null) { // (Phase 1)
                 int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
-                if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+                if (sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")) {
                     tab++;
                 }
                 sb.append("\t".repeat(Math.max(0, tab)));
@@ -703,13 +703,48 @@ public class ProgramPrinter implements CListener {
         if (nested != 0) { // (Phase 1)
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
 
-            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+            if (sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")) {
                 tab++;
             }
 
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
 //            sb.append("\t".repeat(Math.max(0, tab + 1)));
+
+
+            //         ************************************         // nested symbol table
+
+            SymbolTable nest = new SymbolTable(ctx.start.getLine(), "nested");
+            nest.setParent(current);
+            current.addChild(nest);
+            StringBuilder key = new StringBuilder(), value = new StringBuilder();
+
+            for (var variable : ctx.statement(0).compoundStatement().blockItemList().blockItem()) {
+                if (variable.declaration() != null) {
+                    if (variable.declaration().initDeclaratorList() != null) { // init value or array
+                        key.append(String.format("Field_%s",
+                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
+                        value.append(String.format("methodField(name: %s) (type: %s",
+                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
+                                variable.declaration().declarationSpecifiers().getText()));
+                        if (variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
+                            value.append(" ");
+                            value.append(String.format("array, length= %s",
+                                    variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
+                        }
+                        value.append(")");
+
+                    } else { // no init value
+                        key.append(String.format("Field_%s",
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                        value.append(String.format("methodField(name:%s) (type:%s)",
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                    }
+                    nest.insert(key.toString(), value.toString());
+                }
+            }
+
         }
         nested++;
     }
@@ -721,6 +756,9 @@ public class ProgramPrinter implements CListener {
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
+
+            if (current != null)
+                current = current.getParent();
         }
 
     }
@@ -730,13 +768,44 @@ public class ProgramPrinter implements CListener {
         if (nested != 0) { // (Phase 1)
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
 
-            if(sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")){
+            if (sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("nested")) {
                 tab++;
             }
 
             sb.append("\t".repeat(Math.max(0, tab)));
             sb.append("nested statement: {\n");
-//            sb.append("\t".repeat(Math.max(0, tab)));
+
+            //         ************************************         // nested symbol table
+            SymbolTable nest = new SymbolTable(ctx.start.getLine(), "nested");
+            nest.setParent(current);
+            current.addChild(nest);
+            StringBuilder key = new StringBuilder(), value = new StringBuilder();
+
+            for (var variable : ctx.statement().compoundStatement().blockItemList().blockItem()) {
+                if (variable.declaration() != null) {
+                    if (variable.declaration().initDeclaratorList() != null) { // init value or array
+                        key.append(String.format("Field_%s",
+                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0]));
+                        value.append(String.format("methodField(name: %s) (type: %s",
+                                variable.declaration().initDeclaratorList().initDeclarator(0).declarator().getText().split("\\[")[0],
+                                variable.declaration().declarationSpecifiers().getText()));
+                        if (variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().LeftBracket(0) != null) { // isArray
+                            value.append(" ");
+                            value.append(String.format("array, length= %s",
+                                    variable.declaration().initDeclaratorList().initDeclarator(0).declarator().directDeclarator().Constant(0).getText()));
+                        }
+                        value.append(")");
+
+                    } else { // no init value
+                        key.append(String.format("Field_%s",
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                        value.append(String.format("methodField(name:%s) (type:%s)",
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText(),
+                                variable.declaration().declarationSpecifiers().declarationSpecifier(1).getText()));
+                    }
+                    nest.insert(key.toString(), value.toString());
+                }
+            }
         }
         nested++;
     }
@@ -748,6 +817,8 @@ public class ProgramPrinter implements CListener {
             int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
             sb.append("\t".repeat(Math.max(0, tab - 1)));
             sb.append("}\n");
+            if (current != null)
+                current = current.getParent();
         }
     }
 
@@ -810,7 +881,7 @@ public class ProgramPrinter implements CListener {
         // sb.append("\t"); // (Phase 1)
         int tab = sb.toString().split("\n")[sb.toString().split("\n").length - 1].split("\t").length - 1;
 
-        if(!sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("program start")){
+        if (!sb.toString().split("\n")[sb.toString().split("\n").length - 1].contains("program start")) {
             tab--;
         }
 
