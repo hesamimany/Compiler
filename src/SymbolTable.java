@@ -25,6 +25,7 @@ public class SymbolTable {
     }
 
     public void addChild(SymbolTable childTable) {
+        childTable.setParent(this);
         children.add(childTable);
     }
 
