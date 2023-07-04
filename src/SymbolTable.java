@@ -20,8 +20,20 @@ public class SymbolTable {
         hashtable.put(idefName, attributes);
     }
 
-    public String lookup(String idefName) {
-        return hashtable.get(idefName);
+    public SymbolTable lookup(String idefName, Boolean isField) {
+        String key;
+        if (isField) key = "Field_" + idefName;
+        else key = "Method_" + idefName;
+        SymbolTable value = null;
+        if (hashtable.get(key) != null)
+            value = this;
+        else {
+            if (parent != null) {
+                value = parent.lookup(idefName, isField);
+                if (value != null) return value;
+            }
+        }
+        return value;
     }
 
     public void addChild(SymbolTable childTable) {
@@ -35,6 +47,10 @@ public class SymbolTable {
 
     public ArrayList<SymbolTable> getChildren() {
         return children;
+    }
+
+    public Hashtable<String, String> getHashtable() {
+        return hashtable;
     }
 
     public String getName() {
@@ -87,5 +103,16 @@ public class SymbolTable {
         }
 
         return string.toString();
+    }
+
+
+    static Enum<Type> typeCheck(String input) {
+        if (input.contains(".")) {
+            return Type.FLOAT;
+        } else if (input.matches("[0-9]+")) {
+            return Type.INT;
+        } else {
+            return Type.CHAR;
+        }
     }
 }
